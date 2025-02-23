@@ -1,0 +1,25 @@
+<section>
+  Here are some possible matching concepts for your search. Select one to view all of its kennings.
+</section>
+{{#if error}}
+  <p class="notice">
+    {{error}}
+  </p>
+
+{{else}}
+
+  {{#if concept.length}}
+    {{#each concept}}
+        <article>
+          <h3>{{word}}</h3>
+          <p>{{{definition}}}</p>
+          <small>{{id}}</small>
+        </article>
+      {{/each}}
+  {{else}}
+    <p class="notice">
+      No concept found matching your search!
+    </p>
+  {{/if}}
+
+{{/if}}

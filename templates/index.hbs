@@ -1,0 +1,28 @@
+<section>
+  Hover over the words in Hîsyêô for their definition. Reach out in the Discord for any questions or issues.
+</section>
+
+{{#if error}}
+
+  <p class="notice">{{error}}</p>
+
+{{else}}
+
+  {{#if kennings.length}}
+
+    {{#each kennings}}
+
+        <article>
+          <h3>{{english}}</h3>
+          <p>{{{html}}}</p>
+        </article>
+
+      {{/each}}
+
+  {{else}}
+
+    <p class="notice">No records!</p>
+
+  {{/if}}
+
+{{/if}}

@@ -1,0 +1,38 @@
+{
+  "name": "hisyeo-kennings",
+  "version": "0.1.1",
+  "description": "A Node app with SQLite database, instantly up and running.",
+  "main": "modules/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node modules/server.js"
+  },
+  "dependencies": {
+    "sqlite": "^5.1.1",
+    "axios": "^1.7.9",
+    "sqlite3": "^5.1.7",
+    "handlebars": "^4.7.8",
+    "fastify": "^4.29.0",
+    "@fastify/view": "^9.1.0",
+    "@fastify/static": "^7.0.4",
+    "@fastify/formbody": "^7.4.0",
+    "wordnet": "^2.0.0",
+    "fuse.js": "^7.1.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "zx": "^7.2.3"
+  },
+  "engines": {
+    "node": "16.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/hisyeo-kennings"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "sqlite"
+  ]
+}
