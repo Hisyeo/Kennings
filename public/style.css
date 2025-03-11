@@ -1,0 +1,24 @@
+article > section:first-child {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+article > section:last-child {
+  margin-bottom: 1rem;
+}
+
+table#votes {
+  float: right;
+  margin-top: 0rem;
+}
+
+table#index-search {
+  margin-left: auto;
+  margin-right: auto;
+  border: none;
+}
+
+table#index-search tr, table#index-search td {
+  border: none;
+}

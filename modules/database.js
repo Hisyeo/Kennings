@@ -6,7 +6,7 @@ import { open as dbWrapper } from 'sqlite';
 // Enable verbose / debug mode
 sqlite3.verbose();
 
-const DB_FILE = "./.data/kennings-v02.db";
+const DB_FILE = "./.data/kennings-v05.db";
 
 export default class Database {
   sqlite;
@@ -65,36 +65,81 @@ export default class Database {
    * Return everything in the Kennings table
    * Throw an error in case of db connection issues
    */
-  async getPublishedKennings() {
+  async getRecentPublishedKennings() {
+    console.debug(`getRecentPublishedKennings ()`);
     try { return await this.sqlite.all(
-     `SELECT k.concept, k.definition, kw.pos, w.abugida, w.latin, w.syllabary
-      FROM Kenning k
-      JOIN KenningWord kw ON k.id = kw.kenning
-      JOIN HisyeoWord  w  ON w.id = kw.word
-      WHERE k.isDeleted = FALSE AND k.type = 17 ORDER BY k.concept DESC`
+      `SELECT
+        k.id,
+        k.concept,
+        k.definition,
+        k.createdOn,
+        w.abugida,
+        w.latin,
+        w.syllabary,
+        dt.name AS kind
+      FROM KenningWord kw
+      INNER JOIN HisyeoWord w ON w.id = kw.word
+      INNER JOIN (
+        SELECT *
+        FROM Kenning
+        ORDER BY modifiedOn DESC
+        LIMIT 5
+      ) k ON kw.kenning = k.id
+      INNER JOIN DatabaseType dt ON w.type = dt.id
+      WHERE k.type = 17
+      AND   kw.version = (SELECT MAX(version) FROM KenningWord WHERE kenning = k.id)
+      ORDER BY k.concept, kw.id ASC`
     ) }
     catch (dbError) { console.error(dbError) }
   }
   
   /**
-   * Get specific actions for a matching set of kennings
+   * Get all kennings for a matching concept
    * 
-   * searchString {string}
-   * hisyeo {boolean} locate by searching Hisyëö text or English text
+   * concept {string} A panlexia concept id
    *
    * Return a joined list of kennings and time fields from all records in the Kennings and Actions tables
    */
-  async searchActions(searchString, hisyeo) {
-    console.debug(`Search String: ${searchString}\tHisyëö: ${hisyeo}`);
-    if (hisyeo) {
-      try {
-        return await this.sqlite.all(`SELECT * FROM Kennings WHERE hisyeo like '%${searchString}%'`);
-      } catch (dbError) { console.error(dbError) }
-    } else {
-      try {
-        return await this.sqlite.all(`SELECT * FROM Kennings WHERE english like '%${searchString}%'`);;
-      } catch (dbError) { console.error(dbError) }
-    }
+  async getKennings(concepts) {
+    console.debug(`getKennings concepts: ${concepts}`);
+    try { return await this.sqlite.all(
+      `SELECT
+        k.id,
+        k.concept,
+        k.definition,
+        k.createdOn,
+        w.abugida,
+        w.latin,
+        w.syllabary,
+        dt.name AS kind
+       FROM Kenning     k
+       JOIN KenningWord kw ON k.id = kw.kenning
+       JOIN HisyeoWord  w  ON w.id = kw.word
+       INNER JOIN DatabaseType dt ON w.type = dt.id
+       WHERE k.concept IN (${concepts.map(c => `'${c}'`)})
+       AND   k.type = 17 -- published
+       AND   kw.version = (
+         SELECT MAX(version) FROM KenningWord WHERE kenning = k.id
+       )`
+    ) } catch (dbError) { console.error(dbError) }
+  }
+  
+ /**
+   * Get sums of all votes for a kenning id by type
+   * 
+   * id {string} A kenning key
+   *
+   * Return a list of all vote sums by type
+   */
+  async getKenningsVotes(ids) {
+    console.debug(`getKenningVotes ids: ${ids}`);
+    try { return await this.sqlite.all(
+      `SELECT kenning, dt.emoji, dt.name, dt.description, SUM(weight) as total
+       FROM UserVote
+       JOIN DatabaseType dt ON type = dt.id
+       WHERE kenning IN (${ids.join(', ')})
+       GROUP BY type;`);
+    } catch (dbError) { console.error(dbError) }
   }
   
   /**
@@ -130,15 +175,15 @@ export default class Database {
   
   
   /**
-   * Delete a kenning from the database
+   * Unpublish a kenning from the database
    *
    * Return whether op was successful or not
    * Loh an error in case of db connection issues
    */
-  async deleteKenning(id) {
+  async unpublishKenning(id) {
     const now = new Date().toISOString();
     try {
-      await this.sqlite.all("UPDATE Kennings SET isDeleted = TRUE, deletedOn = ?, lastUpdatedOn = ? WHERE id = ?", now, now, id);
+      await this.sqlite.all("UPDATE Kenning SET type = 16, modifiedOn = ? WHERE id = ?", now, id);
       return true
     } catch (dbError) {
       console.error(dbError);
@@ -161,6 +206,25 @@ export default class Database {
       console.error(dbError);
       return false
     }
+  }
+  
+  /**
+   * Get all Hîsyêô words from a text
+   * 
+   * text {string} A Hîsyêô text that needs to be parsed and converted to word IDs
+   *
+   * Return a list of ids and text (if no word is found, the text value is provided instead)
+   */
+  async getWords(text) {
+    console.debug(`getWords text: ${text}`);
+    const tokens = text.split(/\s*\b\s*/);
+    console.debug('getWords> tokens =', tokens);
+    try { return await this.sqlite.all(
+      `WITH ParsedWord(value) AS (VALUES ${tokens.join(', ')})
+       SELECT w.id
+       FROM HisyeoWord  w
+       JOIN ParsedWord pw ON w.latin = pw.value`
+    ) } catch (dbError) { console.error(dbError) }
   }
   
   /**

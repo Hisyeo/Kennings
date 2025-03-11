@@ -5,23 +5,25 @@
   "main": "modules/server.js",
   "type": "module",
   "scripts": {
-    "start": "node modules/server.js"
+    "start": "node modules/server.js",
+    "sql:dry-run": "rm .data/test-run.db; cat migrations/0001-init.sql | sqlite3 .data/test-run.db"
   },
   "dependencies": {
-    "sqlite": "^5.1.1",
-    "axios": "^1.7.9",
-    "sqlite3": "^5.1.7",
-    "handlebars": "^4.7.8",
-    "fastify": "^4.29.0",
-    "@fastify/view": "^9.1.0",
-    "@fastify/static": "^7.0.4",
-    "@fastify/formbody": "^7.4.0",
-    "wordnet": "^2.0.0",
-    "fuse.js": "^7.1.0",
-    "dotenv": "^16.3.1"
+    "sqlite": "~5.1.1",
+    "axios": "~1.7.9",
+    "sqlite3": "~5.1.7",
+    "handlebars": "~4.7.8",
+    "fastify": "~4.29.0",
+    "@fastify/view": "~9.1.0",
+    "@fastify/static": "~7.0.4",
+    "@fastify/formbody": "~7.4.0",
+    "wordnet": "~2.0.0",
+    "fuse.js": "~7.1.0",
+    "dotenv": "~16.3.1",
+    "javascript-time-ago": "~2.5.11"
   },
   "devDependencies": {
-    "zx": "^7.2.3"
+    "zx": "~7.2.3"
   },
   "engines": {
     "node": "16.x"

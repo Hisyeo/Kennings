@@ -16,7 +16,7 @@ VALUES
   ('HisyeoWord', 'grp', '📋', 'Grouping marks surround direct quotations, sidenotes or other notations.'),
   ('Kenning', 'fix', '🛠️', 'Fixes are needed for this kenning before it can be published.'),
   ('Kenning', 'review', '👀', 'Review is needed of this kenning to confirm correct spelling, grammar and code of conduct compliance.'),
-  ('Kenning', 'unpubl', '⛔', 'Unpublished kennings are not available to see on the site or receive via the Discord bot.'),
+  ('Kenning', 'del', '⛔', 'Deleted kennings are not available to see on the site or receive via the Discord bot.'),
   ('Kenning', 'publ', '🚢', 'Published kennings are available to see on the site or recieve via the Discord bot.'),
   ('UserVote', 'std', '⭐', 'Standard expression that is precise, succint, and understandable.'),
   ('UserVote', 'min', '🟨', 'Minimalist expression which is true but vague or easily misconstrued.'),

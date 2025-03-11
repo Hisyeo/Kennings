@@ -1,4 +1,12 @@
 <section>
+  <form action="/search" method="get">
+    <table id="index-search">
+      <tr>
+        <td><input type="text" placeholder="Search..." name="value" value="{{searchValue}}"></td>
+        <td><button type="submit"><i class="fa fa-search"></i></button></td>
+      </tr>
+    </table>
+  </form>
   Hover over the words in Hîsyêô for their definition. Reach out in the Discord for any questions or issues.
 </section>
 
@@ -8,20 +16,49 @@
 
 {{else}}
 
-  {{#if kennings.length}}
+  {{#if (hasConcepts concepts)}}
 
-    {{#each kennings}}
+    {{#each concepts}}
 
-        <article>
-          <h3>{{english}}</h3>
-          <p>{{{html}}}</p>
-        </article>
+      <h3>{{this.[0].[0].concept}}</h3>
+      <p><em>{{this.[0].[0].definition}}</em></p>
 
-      {{/each}}
+      {{#if (hasKennings this.[0])}}
+        <h4>Kennings</h4>
+        {{#each this}} {{!-- each list of kenning words --}}
+
+          <article>
+            <section>
+              <p>{{{kenning "latin" this}}}</p>
+            </section>
+            <section>
+              <table id="votes">
+                <tr>
+                  {{#each this.[0].votes}}<td>
+                    <abbr style="text-decoration: none"
+                          title="{{description}}">{{emoji}}</abbr>
+                    {{total}}
+                  </td>{{/each}}
+                </tr>
+              </table>
+              <small>
+                Created {{formatDate this.[0].createdOn}}
+              </small>
+            </section>
+          </article>
+
+        {{/each}}
+      {{else}}
+
+         <p class="notice">No kennings found!</p>      
+
+      {{/if}}  
+
+    {{/each}}
 
   {{else}}
 
-    <p class="notice">No records!</p>
+    <p class="notice">No concepts found!</p>
 
   {{/if}}
 
