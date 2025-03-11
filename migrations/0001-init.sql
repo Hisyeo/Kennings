@@ -1,24 +1,21 @@
 CREATE TABLE Kenning (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  concept       TEXT NOT NULL,
-  type          INT NOT NULL,
-  definition    TEXT NOT NULL,
-  isDeleted     INTEGER NOT NULL,
-  createdOn     TEXT NOT NULL,
-  deletedOn     TEXT,
-  restoredOn    TEXT,
-  lastUpdatedOn TEXT,
-                FOREIGN KEY(type) REFERENCES DatabaseType(id)
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  concept    TEXT NOT NULL,
+  type       INT  NOT NULL DEFAULT 15,
+  definition TEXT NOT NULL,
+  createdBy  TEXT NOT NULL,
+  createdOn  DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+  modifiedOn DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+             FOREIGN KEY(type) REFERENCES DatabaseType(id)
 );
 
 CREATE TABLE KenningWord (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
   kenning INTEGER NOT NULL,
-  pos     INTEGER NOT NULL,
+  version INTEGER NOT NULL,
   word    INTEGER NOT NULL,
           FOREIGN KEY(kenning) REFERENCES Kenning(id)
 );
-
 
 CREATE TABLE HisyeoWord (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,14 +27,16 @@ CREATE TABLE HisyeoWord (
 );
 
 CREATE TABLE UserVote (
-  id      INTEGER PRIMARY KEY AUTOINCREMENT,
-  user    TEXT NOT NULL,
-  kenning INTEGER NOT NULL,
-  type    INTEGER NOT NULL,
-  weight  INTEGER NOT NULL,
-          FOREIGN KEY(kenning)  REFERENCES Kenning(id),
-          FOREIGN KEY(type)     REFERENCES DatabaseType(id),
-          UNIQUE(user, kenning) ON CONFLICT REPLACE
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  kenning    INTEGER NOT NULL,
+  type       INTEGER NOT NULL DEFAULT 18, -- std
+  weight     INTEGER NOT NULL,
+  createdBy  TEXT NOT NULL,
+  createdOn  DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+  modifiedOn DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+             FOREIGN KEY(kenning)  REFERENCES Kenning(id),
+             FOREIGN KEY(type)     REFERENCES DatabaseType(id),
+             UNIQUE(createdBy, kenning) ON CONFLICT REPLACE
 );
 
 CREATE TABLE DatabaseType (
