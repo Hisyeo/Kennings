@@ -17,7 +17,7 @@ const definitionRows = String(definitions)
     }
 })
 
-const searchDefinitions = id => {
+export const searchDefinitions = id => {
   const definitionIndex = definitionRows.map(d => d.concept).indexOf(id);
   if (definitionIndex > -1) {
     return definitionRows[definitionIndex].definition

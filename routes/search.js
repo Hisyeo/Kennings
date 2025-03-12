@@ -16,7 +16,6 @@ export default function (db) {
     else {
       params.searchResults = searchEnglish(params.searchValue);
       let remainingConcepts = [...params.searchResults];
-
       if (!params.searchResults) { params.error = 'No English word was found that matches that search value.' }
       else {
         const kennings = await db.getKennings(
@@ -37,6 +36,7 @@ export default function (db) {
           {}
         )
         
+        
         const kenningIds = new Set();
         for (let concept in groupedByConcept) {
           groupedByConcept[concept] = groupedByConcept[concept].reduce(
@@ -48,22 +48,23 @@ export default function (db) {
             []
           ).filter(kennings => kennings.length > 0)      
         }
-        
+
         const kenningVotes = await db.getKenningsVotes([...kenningIds]);
         for (let vote of kenningVotes) {
           for (let concept in groupedByConcept) {
-            if (vote.kenning in groupedByConcept[concept])
-              for (let kenningWord of groupedByConcept[concept][vote.kenning]) {
+            const kenningIndex = groupedByConcept[concept].map(k => k[0].id).indexOf(vote.kenning) 
+            if (kenningIndex > -1)
+              for (let kenningWord of groupedByConcept[concept][kenningIndex]) {
                 if ('votes' in kenningWord) {
                   kenningWord.votes.push(vote)
                 } else {
                   kenningWord.votes = [vote]
                 }
-                
+
               }
           }
         }
-
+        
         for (let concept of remainingConcepts) { groupedByConcept[concept.concept] = [[concept]] }
         
         if (groupedByConcept) { params.concepts = groupedByConcept }
