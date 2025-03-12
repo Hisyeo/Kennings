@@ -26,6 +26,7 @@ export default function (db) {
       {}
     )
     
+    
     const kenningIds = new Set();
     for (let concept in groupedByConcept) {
       groupedByConcept[concept] = groupedByConcept[concept].reduce(
@@ -37,12 +38,13 @@ export default function (db) {
         []
       ).filter(kennings => kennings.length > 0)      
     }
-    
+
     const kenningVotes = await db.getKenningsVotes([...kenningIds]);
     for (let vote of kenningVotes) {
       for (let concept in groupedByConcept) {
-        if (vote.kenning in groupedByConcept[concept])
-          for (let kenningWord of groupedByConcept[concept][vote.kenning]) {
+        const kenningIndex = groupedByConcept[concept].map(k => k[0].id).indexOf(vote.kenning) 
+        if (kenningIndex > -1)
+          for (let kenningWord of groupedByConcept[concept][kenningIndex]) {
             if ('votes' in kenningWord) {
               kenningWord.votes.push(vote)
             } else {
@@ -52,7 +54,7 @@ export default function (db) {
           }
       }
     }
-    
+    console.log(JSON.stringify(groupedByConcept, null, 2));
     if (groupedByConcept) { params.concepts = groupedByConcept }
     // Let the user know if there was a db error
     else { params.error = data.errorMessage }

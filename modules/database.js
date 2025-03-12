@@ -77,15 +77,10 @@ export default class Database {
         w.latin,
         w.syllabary,
         dt.name AS kind
-      FROM KenningWord kw
-      INNER JOIN HisyeoWord w ON w.id = kw.word
-      INNER JOIN (
-        SELECT *
-        FROM Kenning
-        ORDER BY modifiedOn DESC
-        LIMIT 5
-      ) k ON kw.kenning = k.id
-      INNER JOIN DatabaseType dt ON w.type = dt.id
+      FROM KenningWord                           kw
+      INNER JOIN HisyeoWord                       w ON w.id = kw.word
+      INNER JOIN (SELECT * FROM Kenning LIMIT 5)  k ON kw.kenning = k.id
+      INNER JOIN DatabaseType                    dt ON w.type = dt.id
       WHERE k.type = 17
       AND   kw.version = (SELECT MAX(version) FROM KenningWord WHERE kenning = k.id)
       ORDER BY k.concept, kw.id ASC`
@@ -108,6 +103,7 @@ export default class Database {
         k.concept,
         k.definition,
         k.createdOn,
+        k.createdBy,
         w.abugida,
         w.latin,
         w.syllabary,
@@ -138,7 +134,7 @@ export default class Database {
        FROM UserVote
        JOIN DatabaseType dt ON type = dt.id
        WHERE kenning IN (${ids.join(', ')})
-       GROUP BY type;`);
+       GROUP BY kenning, type;`);
     } catch (dbError) { console.error(dbError) }
   }
   
@@ -217,15 +213,29 @@ export default class Database {
    */
   async getWords(text) {
     console.debug(`getWords text: ${text}`);
-    const tokens = text.split(/\s*\b\s*/);
+    const tokens = [...text.matchAll(/[a-zôêîû]+|[^a-zôêîû]/gi)]
+      .filter(t => !(t == undefined || t == null || t == ' '))
+      .map((t, i) => `(${i}, '${t}')`);
     console.debug('getWords> tokens =', tokens);
     try { return await this.sqlite.all(
-      `WITH ParsedWord(value) AS (VALUES ${tokens.join(', ')})
-       SELECT w.id
+      `WITH ParsedWord (id, value) AS (VALUES ${tokens.join(', ')})
+       SELECT w.id, pw.value
        FROM HisyeoWord  w
-       JOIN ParsedWord pw ON w.latin = pw.value`
+       RIGHT JOIN ParsedWord pw ON w.latin = pw.value
+       ORDER BY pw.id ASC`
     ) } catch (dbError) { console.error(dbError) }
   }
+  
+  // CREATE TABLE Kenning (
+  //   id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  //   concept    TEXT NOT NULL,
+  //   type       INT  NOT NULL DEFAULT 15,
+  //   definition TEXT NOT NULL,
+  //   createdBy  TEXT NOT NULL,
+  //   createdOn  DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+  //   modifiedOn DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+  //              FOREIGN KEY(type) REFERENCES DatabaseType(id)
+  // );
   
   /**
    * Add a kenning entry
@@ -234,16 +244,23 @@ export default class Database {
    * Insert the kenning
    * Return whether the insertion was successful
    */
-  async addKenning(english, hisyeo, html) {
-    const now = new Date().toISOString();
+  async addKenning(username, concept, definition, words) {
+    const d = new Date(); 
+    const mo = d.getMonth()+1 < 10 ? `0${d.getMonth()+1}` : d.getMonth()+1;
+    const day = d.getDate() < 10 ? `0${d.getDate()}` : d.getDate();
+    const now = `${d.getFullYear()}-${mo}-${day} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`
     try {
-      const kenning = await this.sqlite.run(
-        "INSERT INTO Kennings (english, hisyeo, html, isDeleted, createdOn, lastUpdatedOn) VALUES (?, ?, ?, FALSE, ?, ?)",
-        english,
-        hisyeo,
-        html,
-        now,
-        now);
+      const k = await this.sqlite.run(
+        `INSERT INTO
+         Kenning (concept, definition, createdBy, createdOn, modifiedOn)
+          VALUES (?,       ?,          ?,         ?,         ?)`,
+                  concept, definition, username,  now,       now);
+      console.log(k);
+      const kw = await this.sqlite.exec(
+        `INSERT INTO
+         KenningWord (kenning, version, word)
+         VALUES      ${words.map(w => `(${k.lastID}, 1, ${w})`).join(', ')};`
+      )
       return true
     } catch (dbError) {
       console.error(dbError);
